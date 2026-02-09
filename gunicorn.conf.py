@@ -2,7 +2,7 @@
 # Configuration pour Gunicorn sur Render
 
 # Temps d'attente maximum pour une requête (en secondes)
-timeout = 120
+timeout = 10
 
 # Garder la connexion alive
 keepalive = 5
