@@ -9,23 +9,50 @@ django.setup()
 
 from Backend.models.auth_user_model import Utilisateur, Role
 
+def create_admin_auto():
+    """Création automatique depuis variables d'environnement (pour production)"""
+    login = os.environ.get('ADMIN_LOGIN')
+    password = os.environ.get('ADMIN_PASSWORD')
+    nom = os.environ.get('ADMIN_NOM', 'Admin')
+    prenom = os.environ.get('ADMIN_PRENOM', 'Super')
+    
+    if not login or not password:
+        print("⚠️ Mode auto : ADMIN_LOGIN et ADMIN_PASSWORD non définis")
+        return False
+    
+    if Utilisateur.objects.filter(login=login).exists():
+        print(f"✅ Admin {login} existe déjà")
+        return True
+    
+    try:
+        admin = Utilisateur.objects.create_superuser(
+            login=login,
+            password=password,
+            nom=nom,
+            prenom=prenom,
+            role=Role.ADMINISTRATEUR
+        )
+        print(f"✅ Admin créé : {login}")
+        return True
+    except Exception as e:
+        print(f"❌ Erreur création admin : {e}")
+        return False
+
 def create_admin_securise():
+    """Création interactive (pour développement local)"""
     print("CRÉATION SÉCURISÉE DE L'ADMINISTRATEUR")
     print("=" * 50)
     
-    # Vérifier si admin existe déjà
     if Utilisateur.objects.filter(role=Role.ADMINISTRATEUR).exists():
         print("Un administrateur existe déjà.")
         sys.exit(1)
     
-    # Demander les infos de manière sécurisée
     print("\nVeuillez saisir les informations :")
     
     nom = input("Nom : ").strip()
     prenom = input("Prénom : ").strip()
     login = input("Login : ").strip()
     
-    # Saisie sécurisée du mot de passe (ne s'affiche pas)
     print("\nSAISIE DU MOT DE PASSE :")
     print("(Le mot de passe ne s'affichera pas à l'écran)")
     
@@ -41,7 +68,6 @@ def create_admin_securise():
             print("Minimum 12 caractères.")
             continue
         
-        # Validation basique
         if not any(c.isupper() for c in password):
             print("Doit contenir une majuscule.")
             continue
@@ -52,7 +78,6 @@ def create_admin_securise():
             
         break
     
-    # Confirmation
     print(f"\nNom : {nom}")
     print(f"Prénom : {prenom}")
     print(f"Login : {login}")
@@ -65,7 +90,6 @@ def create_admin_securise():
         sys.exit(0)
     
     try:
-        # Création
         admin = Utilisateur.objects.create_superuser(
             login=login,
             password=password,
@@ -74,17 +98,15 @@ def create_admin_securise():
             role=Role.ADMINISTRATEUR
         )
         
-        print("\n ADMINISTRATEUR CRÉÉ !")
+        print("\n✅ ADMINISTRATEUR CRÉÉ !")
         print("=" * 50)
         print(f"Login : {login}")
         print(f"Nom complet : {prenom} {nom}")
-        print("\n IMPORTANT :")
-        print("1. Notez le mot de passe dans un gestionnaire sécurisé")
-        print("2. Changez-le après première connexion")
-        print("3. Ces informations ne seront plus affichées")
         
     except Exception as e:
-        print(f"Erreur : {e}")
+        print(f"❌ Erreur : {e}")
 
 if __name__ == "__main__":
-    create_admin_securise()
+    # Essayer d'abord le mode auto, sinon mode interactif
+    if not create_admin_auto():
+        create_admin_securise()
