@@ -4,7 +4,7 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from sendgrid.helpers.mail import Mail, Email
 
 def send_email_thread(mail):
     try:
@@ -36,8 +36,8 @@ def send_contact_email(request):
             to_emails=settings.DEFAULT_FROM_EMAIL,
             subject=f"Contact: {subject}",
             plain_text_content=full_message,
-            reply_to=email
         )
+        mail.reply_to = Email(email)
 
         # On envoie l'email dans un thread pour ne pas bloquer Gunicorn
         threading.Thread(target=send_email_thread, args=(mail,)).start()
